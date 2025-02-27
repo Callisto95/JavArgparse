@@ -6,7 +6,10 @@ import java.lang.annotation.*;
 @Target(value = ElementType.FIELD)
 public @interface Argument {
 	String shortName() default "";
+	
 	boolean optional() default false;
+	
 	boolean positional() default false;
+	
 	ArgumentType type() default ArgumentType.DEFAULT;
 }

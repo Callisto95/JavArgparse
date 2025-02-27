@@ -9,15 +9,14 @@ import java.util.function.*;
 public class ArgumentParser<T> {
 	private static final String LONG_ARGUMENT_PREFIX = "--";
 	
-	final Class<T> targetClass;
-	
-	private final List<Arg>         relativeArguments   = new ArrayList<>();
-	private final List<Arg>         positionalArguments = new ArrayList<>();
-	private final Map<Arg, Integer> countedArgs         = new HashMap<>();
-	private       int               positionalIndex     = 0;
-	private       T                 object;
-	
 	private final Map<Class<?>, Function<String, ?>> conversionFunctions = new HashMap<>();
+	
+	private final List<Arg>         relativeArguments = new ArrayList<>();
+	private final List<Arg>         positionalArguments = new ArrayList<>();
+	private final Map<Arg, Integer> countedArgs = new HashMap<>();
+	private       int               positionalIndex = 0;
+	final         Class<T>          targetClass;
+	private final T                 object;
 	
 	public ArgumentParser(final Class<T> targetClass) {
 		if (targetClass.isInterface() || targetClass.isPrimitive() || targetClass.isArray() || Void.class.equals(
@@ -26,7 +25,24 @@ public class ArgumentParser<T> {
 		}
 		
 		this.targetClass = targetClass;
+		
+		this.object = instanciateObject();
+		
+		registerArguments();
+		
 		this.initializeDefaultConversionFunctions();
+	}
+	
+	private static boolean checkForInvalidCombinations(final Argument argument) {
+		if (argument.type() == ArgumentType.COUNT && argument.positional()) {
+			return false;
+		}
+		
+		if ((argument.type() == ArgumentType.TRUE_IF_PRESENT || argument.type() == ArgumentType.FALSE_IF_PRESENT) && argument.positional()) {
+			return false;
+		}
+		
+		return true;
 	}
 	
 	private void initializeDefaultConversionFunctions() {
@@ -54,13 +70,11 @@ public class ArgumentParser<T> {
 	}
 	
 	public T parseArgs(final String[] arguments) {
-		this.object = instanciateObject();
-		
-		registerArguments();
-		
 		handleArguments(arguments);
 		
 		verifyArguments();
+		
+		clearCounters();
 		
 		return this.object;
 	}
@@ -124,6 +138,12 @@ public class ArgumentParser<T> {
 				}
 			}
 		}
+	}
+	
+	private void clearCounters() {
+		this.relativeArguments.stream()
+			.filter(arg -> arg.getArgumentType() == ArgumentType.COUNT)
+			.forEach(arg -> this.countedArgs.put(arg, 0));
 	}
 	
 	private void registerArguments() {
@@ -254,7 +274,7 @@ public class ArgumentParser<T> {
 	}
 	
 	private int handleLongArgument(final String[] arguments, final int i) {
-		final String name      = arguments[i].substring(2);
+		final String name = arguments[i].substring(2);
 		
 		final Optional<Arg> argOptional = this.relativeArguments.stream()
 			.filter(arg -> Objects.equals(arg.longName(), name))
@@ -326,17 +346,5 @@ public class ArgumentParser<T> {
 		}
 		
 		return conversionFunction.apply(value);
-	}
-	
-	private static boolean checkForInvalidCombinations(final Argument argument) {
-		if (argument.type() == ArgumentType.COUNT && argument.positional()) { // NOSONAR: TODO add more invalid combinations
-			return false;
-		}
-		
-		if ((argument.type() == ArgumentType.TRUE_IF_PRESENT || argument.type() == ArgumentType.FALSE_IF_PRESENT) && argument.positional()) {
-			return false;
-		}
-		
-		return true;
 	}
 }

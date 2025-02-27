@@ -6,6 +6,7 @@ import org.junit.jupiter.api.*;
 
 import java.io.*;
 import java.nio.file.*;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -112,11 +113,9 @@ class ArgumentParserTests {
 	
 	@Test
 	void testInvalidArgumentTypeCombinations() {
-		final var countAndPositionalArgumentParser = new ArgumentParser<>(CountAndPositional.class);
-		assertThrows(InvalidArgumentCombination.class, () -> countAndPositionalArgumentParser.parseArgs(NO_ARGUMENTS));
+		assertThrows(InvalidArgumentCombination.class, () -> new ArgumentParser<>(CountAndPositional.class));
 		
-		final var positionalAndTrueArgumentParser = new ArgumentParser<>(PositionalAndTrue.class);
-		assertThrows(InvalidArgumentCombination.class, () -> positionalAndTrueArgumentParser.parseArgs(NO_ARGUMENTS));
+		assertThrows(InvalidArgumentCombination.class, () -> new ArgumentParser<>(PositionalAndTrue.class));
 	}
 	
 	@Test
@@ -126,7 +125,17 @@ class ArgumentParserTests {
 			public String aString;
 		}
 		
-		final ArgumentParser<CantTouchThis> parser = new ArgumentParser<>(CantTouchThis.class);
-		assertThrows(ConstructorNotAccessible.class, () -> parser.parseArgs(NO_ARGUMENTS));
+		assertThrows(ConstructorNotAccessible.class, () -> new ArgumentParser<>(CantTouchThis.class));
+	}
+	
+	@Test
+	void testCounter() {
+		final String COUNT = "--count";
+		final String[] fullArgs = {COUNT, COUNT, COUNT, COUNT, COUNT};
+		final ArgumentParser<OnlyCount> countParser = new ArgumentParser<>(OnlyCount.class);
+
+		for (int i = 0; i <= 5; i++) {
+			assertEquals(i, countParser.parseArgs(Arrays.copyOfRange(fullArgs, 0, i)).count);
+		}
 	}
 }

@@ -21,7 +21,7 @@ public enum ArgumentType {
 	
 	private final List<Class<?>> allowedClasses = new ArrayList<>();
 	
-	private ArgumentType(Class<?>... allowedClasses) {
+	ArgumentType(Class<?>... allowedClasses) {
 		this.allowedClasses.addAll(List.of(allowedClasses));
 	}
 	
