@@ -69,7 +69,7 @@ public class ArgumentParser<T> {
 		try {
 			final Constructor<T> constructor = this.targetClass.getDeclaredConstructor();
 			final boolean        access      = constructor.canAccess(null);
-			constructor.setAccessible(true);
+			constructor.setAccessible(true); // NOSONAR: if not accessible, this makes it accessible
 			final T instance = constructor.newInstance();
 			constructor.setAccessible(access);
 			
@@ -78,7 +78,7 @@ public class ArgumentParser<T> {
 		               IllegalAccessException |
 		               InvocationTargetException |
 		               NoSuchMethodException exc) {
-			throw new RuntimeException(exc); // NOSONAR TODO: do not use RuntimeException
+			throw new ConstructorNotAccessible(this.targetClass); // NOSONAR TODO: do not use RuntimeException
 		}
 	}
 	
@@ -108,7 +108,7 @@ public class ArgumentParser<T> {
 		
 		for (Arg argument : this.relativeArguments) {
 			if (!argument.hasBeenUsed()) {
-				if (!argument.optional()) {
+				if (!argument.optional() && argument.getArgumentType() != ArgumentType.COUNT) {
 					throw new RequiredArgumentNotUsed(argument.longName());
 				}
 				
@@ -135,16 +135,22 @@ public class ArgumentParser<T> {
 			// only get the first @Argument, all other can be ignored
 			final Argument argumentAnnotation = field.getAnnotationsByType(Argument.class)[0];
 			
+			if (!checkForInvalidCombinations(argumentAnnotation)) {
+				throw new InvalidArgumentCombination(field);
+			}
+			
 			if (!argumentAnnotation.type().classIsAllowed(field.getType())) {
 				throw new ClassMismatchException(argumentAnnotation, field.getType());
 			}
 			
 			final String kebabName = NameConverter.camelToKebabCase(field.getName());
 			
-			String shortName = argumentAnnotation.shortName();
-			if ("".equals(shortName)) {
-				shortName = null;
-			}
+			// String shortName = argumentAnnotation.shortName();
+			final String shortName = switch (argumentAnnotation.shortName().length()) {
+				case 0 -> null;
+				case 1 -> argumentAnnotation.shortName();
+				default -> throw new ShortNameTooLong(argumentAnnotation.shortName());
+			};
 			
 			final Arg argument = new Arg(
 				field,
@@ -192,7 +198,7 @@ public class ArgumentParser<T> {
 			.findFirst();
 		
 		if (argOptional.isEmpty()) {
-			throw new IllegalStateException();
+			throw new UnknownArgument(arguments[i]);
 		}
 		
 		final Arg arg = argOptional.get();
@@ -236,7 +242,7 @@ public class ArgumentParser<T> {
 			
 			// two arguments used the same following arg
 			if (usedArgs == 2 && maxUsedArguments == 2) {
-				throw new InvalidCombination();
+				throw new ArgumentsOverlap();
 			}
 			
 			if (maxUsedArguments < usedArgs) {
@@ -248,19 +254,14 @@ public class ArgumentParser<T> {
 	}
 	
 	private int handleLongArgument(final String[] arguments, final int i) {
-		if (i + 1 == arguments.length) {
-			throw new NotEnoughArguments();
-		}
-		
 		final String name      = arguments[i].substring(2);
-		final String camelName = NameConverter.kebabToCamel(name);
 		
 		final Optional<Arg> argOptional = this.relativeArguments.stream()
-			.filter(arg -> Objects.equals(arg.longName(), camelName))
+			.filter(arg -> Objects.equals(arg.longName(), name))
 			.findFirst();
 		
 		if (argOptional.isEmpty()) {
-			throw new IllegalStateException();
+			throw new UnknownArgument(arguments[i]);
 		}
 		
 		final Arg arg = argOptional.get();
@@ -309,8 +310,8 @@ public class ArgumentParser<T> {
 		try {
 			// ! TODO: type cast!
 			final boolean access = field.canAccess(object);
-			field.setAccessible(true); // NOSONAR
-			field.set(object, this.convertType(value, field.getType())); // NOSONAR
+			field.setAccessible(true); // NOSONAR: if not accessible, this makes it accessible
+			field.set(object, this.convertType(value, field.getType())); // NOSONAR: see above
 			field.setAccessible(access);
 		} catch (IllegalAccessException exc) {
 			throw new IllegalStateException(exc);
@@ -325,5 +326,17 @@ public class ArgumentParser<T> {
 		}
 		
 		return conversionFunction.apply(value);
+	}
+	
+	private static boolean checkForInvalidCombinations(final Argument argument) {
+		if (argument.type() == ArgumentType.COUNT && argument.positional()) { // NOSONAR: TODO add more invalid combinations
+			return false;
+		}
+		
+		if ((argument.type() == ArgumentType.TRUE_IF_PRESENT || argument.type() == ArgumentType.FALSE_IF_PRESENT) && argument.positional()) {
+			return false;
+		}
+		
+		return true;
 	}
 }

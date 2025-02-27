@@ -4,7 +4,18 @@ import java.util.*;
 
 public enum ArgumentType {
 	DEFAULT,
-	COUNT(Short.class, Integer.class, Float.class, Double.class),
+	COUNT(
+		Byte.class,
+		Short.class,
+		Integer.class,
+		Float.class,
+		Double.class,
+		byte.class,
+		short.class,
+		int.class,
+		float.class,
+		double.class
+	),
 	TRUE_IF_PRESENT(Boolean.class, boolean.class),
 	FALSE_IF_PRESENT(Boolean.class, boolean.class);
 	
