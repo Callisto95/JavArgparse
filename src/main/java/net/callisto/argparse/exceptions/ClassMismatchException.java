@@ -1,4 +1,6 @@
-package net.callisto.argparse;
+package net.callisto.argparse.exceptions;
+
+import net.callisto.argparse.*;
 
 public class ClassMismatchException extends RuntimeException {
 	public ClassMismatchException(final Argument argumentAnnotation, final Class<?> type) {

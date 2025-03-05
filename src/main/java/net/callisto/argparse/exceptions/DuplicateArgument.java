@@ -1,4 +1,4 @@
-package net.callisto.argparse;
+package net.callisto.argparse.exceptions;
 
 public class DuplicateArgument extends RuntimeException {
 	public DuplicateArgument(final String entry) {

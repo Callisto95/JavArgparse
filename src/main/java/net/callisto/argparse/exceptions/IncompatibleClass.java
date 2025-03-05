@@ -1,4 +1,4 @@
-package net.callisto.argparse;
+package net.callisto.argparse.exceptions;
 
 public class IncompatibleClass extends RuntimeException {
 	public <T> IncompatibleClass(final Class<T> targetClass) {

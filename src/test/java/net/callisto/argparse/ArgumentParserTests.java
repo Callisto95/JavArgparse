@@ -2,6 +2,7 @@ package net.callisto.argparse;
 
 import net.callisto.argparse.classes.*;
 import net.callisto.argparse.classes.invalid.*;
+import net.callisto.argparse.exceptions.*;
 import org.junit.jupiter.api.*;
 
 import java.io.*;
@@ -11,8 +12,7 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ArgumentParserTests {
-	private static final String   PATH         = "/dev/null";
-	private static final String[] NO_ARGUMENTS = new String[] {};
+	private static final String PATH = "/dev/null";
 	
 	@Test
 	void testPrimitiveTypes() {
@@ -116,6 +116,8 @@ class ArgumentParserTests {
 		assertThrows(InvalidArgumentCombination.class, () -> new ArgumentParser<>(CountAndPositional.class));
 		
 		assertThrows(InvalidArgumentCombination.class, () -> new ArgumentParser<>(PositionalAndTrue.class));
+		
+		assertThrows(InvalidArgumentCombination.class, () -> new ArgumentParser<>(OptionalPositional.class));
 	}
 	
 	@Test
@@ -130,12 +132,24 @@ class ArgumentParserTests {
 	
 	@Test
 	void testCounter() {
-		final String COUNT = "--count";
-		final String[] fullArgs = {COUNT, COUNT, COUNT, COUNT, COUNT};
+		final String                    COUNT       = "--count";
+		final String[]                  fullArgs    = { COUNT, COUNT, COUNT, COUNT, COUNT };
 		final ArgumentParser<OnlyCount> countParser = new ArgumentParser<>(OnlyCount.class);
-
+		
 		for (int i = 0; i <= 5; i++) {
 			assertEquals(i, countParser.parseArgs(Arrays.copyOfRange(fullArgs, 0, i)).count);
 		}
+	}
+	
+	@Test
+	void testOptionalDefaultValues() {
+		var parser = new ArgumentParser<>(OptionalDefaultValues.class);
+		
+		final OptionalDefaultValues values = assertDoesNotThrow(() -> parser.parseArgs(new String[] {}));
+		
+		assertNull(values.aString);
+		assertNull(values.aPath);
+		assertEquals(0, values.anInt);
+		assertEquals(0, values.aDouble);
 	}
 }

@@ -3,7 +3,7 @@ package net.callisto.argparse;
 import java.lang.reflect.*;
 import java.util.*;
 
-class Arg {
+public class ArgumentInfo {
 	private final Field        field;
 	private final boolean      positional;
 	private final boolean      optional;
@@ -12,7 +12,7 @@ class Arg {
 	private final ArgumentType type;
 	private       boolean      used = false;
 	
-	Arg(Field field, boolean positional, boolean optional, String longName, String shortName,
+	ArgumentInfo(Field field, boolean positional, boolean optional, String longName, String shortName,
 		final ArgumentType type) {
 		this.field      = field;
 		this.positional = positional;
@@ -59,11 +59,11 @@ class Arg {
 		if (object == null || getClass() != object.getClass()) {
 			return false;
 		}
-		final Arg arg = (Arg) object;
-		return positional == arg.positional && optional == arg.optional && used == arg.used && Objects.equals(
+		final ArgumentInfo argumentInfo = (ArgumentInfo) object;
+		return positional == argumentInfo.positional && optional == argumentInfo.optional && used == argumentInfo.used && Objects.equals(
 			field,
-			arg.field
-		) && Objects.equals(longName, arg.longName) && Objects.equals(shortName, arg.shortName) && type == arg.type;
+			argumentInfo.field
+		) && Objects.equals(longName, argumentInfo.longName) && Objects.equals(shortName, argumentInfo.shortName) && type == argumentInfo.type;
 	}
 	
 	@Override

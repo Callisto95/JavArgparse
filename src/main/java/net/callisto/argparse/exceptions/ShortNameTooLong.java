@@ -1,4 +1,4 @@
-package net.callisto.argparse;
+package net.callisto.argparse.exceptions;
 
 public class ShortNameTooLong extends RuntimeException {
 	public ShortNameTooLong(final String shortName) {

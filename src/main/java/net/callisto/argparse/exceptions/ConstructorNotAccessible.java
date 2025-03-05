@@ -1,4 +1,4 @@
-package net.callisto.argparse;
+package net.callisto.argparse.exceptions;
 
 public class ConstructorNotAccessible extends RuntimeException {
 	public <T> ConstructorNotAccessible(final Class<T> targetClass) {

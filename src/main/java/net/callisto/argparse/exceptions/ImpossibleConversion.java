@@ -1,4 +1,4 @@
-package net.callisto.argparse;
+package net.callisto.argparse.exceptions;
 
 public class ImpossibleConversion extends RuntimeException {
 	public ImpossibleConversion(final String value, final Class<?> target) {
